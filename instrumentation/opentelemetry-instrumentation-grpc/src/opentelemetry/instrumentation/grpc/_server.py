@@ -119,7 +119,7 @@ class _OpenTelemetryServicerContext(grpc.ServicerContext):
     def trailing_metadata(self):
         return self._servicer_context.trailing_metadata()
 
-    def abort(self, code, details):
+    def _abort(self, code, details):
         self._code = code
         self._details = details
         self._active_span.set_attribute(
@@ -127,9 +127,13 @@ class _OpenTelemetryServicerContext(grpc.ServicerContext):
         )
         status = _server_status(code, details)
         self._active_span.set_status(status)
+
+    def abort(self, code, details):
+        self._abort(code, details)
         return self._servicer_context.abort(code, details)
 
     def abort_with_status(self, status):
+        self._abort(status.code, status.details)
         return self._servicer_context.abort_with_status(status)
 
     def code(self):
